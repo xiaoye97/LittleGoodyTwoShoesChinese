@@ -34,7 +34,7 @@ namespace xiaoye97
                 sheets.Tables.Add(sheet.ToDataTable());
             }
 
-            MiniExcel.SaveAs(LGTSChinesePlugin.ExcelPath, sheets, excelType: ExcelType.XLSX, overwriteFile: true, configuration: excelConfig);
+            MiniExcel.SaveAs(LGTSChinesePlugin.ChineseExcelPath, sheets, excelType: ExcelType.XLSX, overwriteFile: true, configuration: excelConfig);
         }
 
         private SheetData DumpGrid(Grid grid)

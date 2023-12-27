@@ -30,12 +30,12 @@ namespace xiaoye97
             }
             int count = 0;
             Dictionary<string, SheetData> Sheets = new Dictionary<string, SheetData>();
-            var sheetNames = MiniExcel.GetSheetNames(LGTSChinesePlugin.ExcelPath);
+            var sheetNames = MiniExcel.GetSheetNames(LGTSChinesePlugin.ChineseExcelPath);
             foreach (var sheetName in sheetNames)
             {
                 // 如果不是游戏中有的表, 则跳过
                 if (!LGTSSheetNames.Contains(sheetName)) continue;
-                var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ExcelPath, sheetName: sheetName);
+                var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: sheetName);
                 SheetData sheet = new SheetData();
                 sheet.SheetName = sheetName;
                 foreach (DataRow row in dataTable.Rows)

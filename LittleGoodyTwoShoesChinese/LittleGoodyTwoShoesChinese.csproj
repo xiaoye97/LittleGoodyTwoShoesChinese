@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\Program Files %28x86%29\Steam\steamapps\common\Little Goody Two Shoes\BepInEx\plugins\</OutputPath>
+    <OutputPath>..\..\..\Program Files %28x86%29\Steam\steamapps\common\Little Goody Two Shoes\BepInEx\plugins\LittleGoodyTwoShoesChinese\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -93,12 +93,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Ex.cs" />
+    <Compile Include="FontManager\FontData.cs" />
+    <Compile Include="FontManager\FontInfo.cs" />
+    <Compile Include="FontManager\FontManager.cs" />
+    <Compile Include="FontManager\TextFontPatchs.cs" />
+    <Compile Include="FontManager\TMPFontPatchs.cs" />
     <Compile Include="LGTSExcelLoader.cs" />
+    <Compile Include="LGTSUIExcelLoader.cs" />
     <Compile Include="RowData.cs" />
     <Compile Include="SheetData.cs" />
     <Compile Include="LGTSChinesePlugin.cs" />
     <Compile Include="LGTSDumper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UILocData.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
