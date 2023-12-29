@@ -46,6 +46,10 @@
     <Reference Include="MiniExcel, Version=1.31.2.0, Culture=neutral, PublicKeyToken=e7310002a53eac39, processorArchitecture=MSIL">
       <HintPath>..\packages\MiniExcel.1.31.2\lib\net45\MiniExcel.dll</HintPath>
     </Reference>
+    <Reference Include="SimpleScrollSnap">
+      <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\Little Goody Two Shoes\LGTS_Data\Managed\SimpleScrollSnap.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
@@ -97,10 +101,12 @@
     <Compile Include="FontManager\FontData.cs" />
     <Compile Include="FontManager\FontInfo.cs" />
     <Compile Include="FontManager\FontManager.cs" />
+    <Compile Include="FontManager\TextComponentConverter.cs" />
     <Compile Include="FontManager\TextFontPatchs.cs" />
     <Compile Include="FontManager\TMPFontPatchs.cs" />
+    <Compile Include="ILPatch.cs" />
     <Compile Include="LGTSExcelLoader.cs" />
-    <Compile Include="LGTSUIExcelLoader.cs" />
+    <Compile Include="LocPatch.cs" />
     <Compile Include="RowData.cs" />
     <Compile Include="SheetData.cs" />
     <Compile Include="LGTSChinesePlugin.cs" />

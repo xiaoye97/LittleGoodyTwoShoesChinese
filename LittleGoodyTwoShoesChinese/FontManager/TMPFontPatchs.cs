@@ -1,19 +1,26 @@
-﻿using TMPro;
-using HarmonyLib;
+﻿using HarmonyLib;
+using TMPro;
 using UnityEngine;
 
 namespace xiaoye97
 {
     public class TMPFontPatchs
     {
-        public static void ChangeFont(TMP_Text text)
+        public static void ChangeFont(TMP_Text text, TMP_FontAsset font = null)
         {
-            if (text.font.name != FontManager.MainFont.TMPFont.name)
+            if (text == null) return;
+            if (font == null)
+            {
+                font = FontManager.MainFont.TMPFont;
+            }
+            if (font == null || text.font == null) return;
+            if (text.font.name != font.name)
             {
                 //Debug.Log($"将{text.name}的字体从[{text.font.name}]替换为[{FontManager.MainFont.TMPFont.name}]");
-                text.font = FontManager.MainFont.TMPFont;
+                text.font = font;
             }
         }
+
         /// <summary>
         /// 修改TMP字体
         /// </summary>

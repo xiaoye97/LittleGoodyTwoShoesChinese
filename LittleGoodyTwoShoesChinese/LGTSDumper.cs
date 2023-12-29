@@ -1,5 +1,6 @@
 ﻿using Gridly;
 using Gridly.Internal;
+using LGTS.Domain;
 using MiniExcelLibs;
 using MiniExcelLibs.Attributes;
 using MiniExcelLibs.OpenXml;
@@ -65,6 +66,21 @@ namespace xiaoye97
             });
             LGTSChinesePlugin.Log($"sheet:{sheet.SheetName} 内容行数:{sheet.RowDatas.Count}");
             return sheet;
+        }
+
+        /// <summary>
+        /// Dump所有人的名字
+        /// </summary>
+        public void DumpName()
+        {
+            DataTable table = new DataTable();
+            table.Columns.Add("Name");
+            table.Columns.Add("Alias");
+            foreach (var entity in GameData.Instance.EntityData.Entities)
+            {
+                table.Rows.Add(entity.Name, entity.Alias);
+            }
+            MiniExcel.SaveAs($"{LGTSChinesePlugin.PluginDirPath}/Name.xlsx", table, overwriteFile: true);
         }
     }
 }

@@ -22,8 +22,9 @@ namespace xiaoye97
             }
         }
 
-        public Dictionary<string, SheetData> LoadExcel()
+        public Dictionary<string, SheetData> LoadMainExcel()
         {
+            LGTSChinesePlugin.Log($"开始加载文本翻译");
             if (LGTSSheetNames == null)
             {
                 RefreshLGTSSheetNams();
@@ -52,6 +53,71 @@ namespace xiaoye97
             }
             LGTSChinesePlugin.Log($"加载了{count}行翻译");
             return Sheets;
+        }
+
+        /// <summary>
+        /// 加载UI翻译表
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<string, UILocData> LoadUIExcel()
+        {
+            LGTSChinesePlugin.Log($"开始加载UI翻译");
+            int count = 0;
+            Dictionary<string, UILocData> result = new Dictionary<string, UILocData>();
+            var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "UI翻译表");
+            foreach (DataRow row in dataTable.Rows)
+            {
+                UILocData locData = new UILocData();
+                locData.UI路径 = row[0].ToString().Replace("\n", "");
+                if (!string.IsNullOrWhiteSpace(locData.UI路径))
+                {
+                    locData.原文备注 = row[1].ToString().Replace("\n", "");
+                    locData.直接翻译 = row[2].ToString();
+                    locData.表名 = row[3].ToString().Replace("\n", "");
+                    locData.翻译ID = row[4].ToString().Replace("\n", "");
+                    result[locData.UI路径] = locData;
+                    //LGTSChinesePlugin.Log($"UI路径:[{locData.UI路径}] 原文备注:[{locData.原文备注}] 直接翻译:[{locData.直接翻译}] 表名:[{locData.表名}] 翻译ID:[{locData.翻译ID}]");
+                    count++;
+                }
+            }
+            LGTSChinesePlugin.Log($"加载了{count}行UI翻译");
+            return result;
+        }
+
+        /// <summary>
+        /// 加载UI补充翻译表
+        /// </summary>
+        public Dictionary<string, string> LoadUIExcel2()
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+            LGTSChinesePlugin.Log($"开始加载UI补充翻译");
+            var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "UI补充翻译表");
+            foreach (DataRow row in dataTable.Rows)
+            {
+                string ID = row[0].ToString().Replace("\n", "");
+                string 翻译文本 = row[1].ToString();
+                result[ID] = 翻译文本;
+            }
+            LGTSChinesePlugin.Log($"加载了{result.Count}行UI补充翻译");
+            return result;
+        }
+
+        /// <summary>
+        /// 加载人名表
+        /// </summary>
+        public Dictionary<string, string> LoadNameExcel()
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+            LGTSChinesePlugin.Log($"开始加载人名翻译");
+            var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "人名表");
+            foreach (DataRow row in dataTable.Rows)
+            {
+                string name = row[0].ToString().Replace("\n", "");
+                string 翻译名字 = row[2].ToString();
+                result[name] = 翻译名字;
+            }
+            LGTSChinesePlugin.Log($"加载了{result.Count}行人名翻译");
+            return result;
         }
     }
 }
