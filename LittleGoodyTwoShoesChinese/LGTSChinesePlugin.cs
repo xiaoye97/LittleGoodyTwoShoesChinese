@@ -4,6 +4,7 @@ using BepInEx.Logging;
 using Gridly;
 using Gridly.Internal;
 using HarmonyLib;
+using LGTS.Cinematics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +12,7 @@ using System.Reflection;
 using System.Text;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace xiaoye97
@@ -58,7 +60,8 @@ namespace xiaoye97
 
         public static Dictionary<string, SheetData> Sheets = new Dictionary<string, SheetData>();
         public static Dictionary<string, UILocData> UILocDatas = new Dictionary<string, UILocData>();
-        public static Dictionary<string, string> UILocDatas2 = new Dictionary<string, string>();
+        public static Dictionary<string, string> UILocDatasEx = new Dictionary<string, string>();
+        public static Dictionary<string, string> UILocDatasEx2 = new Dictionary<string, string>();
         public static Dictionary<string, string> NameLocDatas = new Dictionary<string, string>();
 
         private void Awake()
@@ -86,6 +89,12 @@ namespace xiaoye97
             Harmony.CreateAndPatchAll(typeof(LGTSChinesePlugin));
             Harmony.CreateAndPatchAll(typeof(LocPatch));
             Harmony.CreateAndPatchAll(typeof(ILPatch));
+            SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
+        }
+
+        private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1)
+        {
+            FindAndAddTranslator();
         }
 
         public static void Log(string msg)
@@ -117,6 +126,14 @@ namespace xiaoye97
                 {
                     DumpSceneNoTranslators(true);
                 }
+                if (Input.GetKeyDown(KeyCode.F3))
+                {
+                    FindAndAddTranslator();
+                }
+                if (Input.GetKeyDown(KeyCode.F4))
+                {
+                    Time.timeScale = Time.timeScale == 1 ? 0 : 1;
+                }
             }
         }
 
@@ -124,29 +141,31 @@ namespace xiaoye97
         {
             Sheets = LGTSExcelLoader.LoadMainExcel();
             UILocDatas = LGTSExcelLoader.LoadUIExcel();
-            UILocDatas2 = LGTSExcelLoader.LoadUIExcel2();
+            UILocDatasEx = LGTSExcelLoader.LoadUIExcelEx();
+            UILocDatasEx2 = LGTSExcelLoader.LoadUIExcelEx2();
             NameLocDatas = LGTSExcelLoader.LoadNameExcel();
             RefreshAllTranslareText();
         }
 
-        //public static void FindAndAddTranslator()
-        //{
-        //    Log("开始查找并添加翻译组件");
-        //    int count = 0;
-        //    var tmps = GameObject.FindObjectsOfType<TextMeshProUGUI>(true);
-        //    foreach (var tmp in tmps)
-        //    {
-        //        if (tmp != null)
-        //        {
-        //            bool result = AddTranslator(tmp);
-        //            if (result)
-        //            {
-        //                count++;
-        //            }
-        //        }
-        //    }
-        //    Log($"共找到{tmps.Length}个没有翻译组件的文本, 添加了{count}个翻译组件");
-        //}
+        public static void FindAndAddTranslator()
+        {
+            Log("开始查找并添加翻译组件");
+            int count = 0;
+            var tmps = GameObject.FindObjectsOfType<TextMeshProUGUI>(true);
+            foreach (var tmp in tmps)
+            {
+                if (tmp != null)
+                {
+                    bool result = AddTranslator(tmp);
+                    if (result)
+                    {
+                        Log($"为TMP文本组件:[{tmp.transform.GetPath()}]添加了翻译组件");
+                        count++;
+                    }
+                }
+            }
+            Log($"共找到{tmps.Length}个没有翻译组件的文本, 添加了{count}个翻译组件");
+        }
 
         public static void RefreshAllTranslareText()
         {
@@ -255,9 +274,9 @@ namespace xiaoye97
                 // 补充UI翻译
                 if (grid == "UI")
                 {
-                    if (UILocDatas2.ContainsKey(recordID))
+                    if (UILocDatasEx.ContainsKey(recordID))
                     {
-                        __result = UILocDatas2[recordID];
+                        __result = UILocDatasEx[recordID];
                         Log("gridId: " + grid + " recordID: " + recordID + " 取到翻译: " + __result);
                         return false;
                     }
@@ -321,6 +340,28 @@ namespace xiaoye97
                 translator.Refesh();
                 return true;
             }
+            else
+            {
+                // 如果没有翻译, 则在补充UI翻译表2内查找是否可以直接从原文翻译
+                if (tmp != null && !string.IsNullOrWhiteSpace(tmp.text))
+                {
+                    string 原文 = tmp.text.Replace("\n", "\\n").Replace("\r", "\\r");
+                    if (UILocDatasEx2.TryGetValue(原文, out string 翻译文本))
+                    {
+                        tmp.text = 翻译文本;
+                        Log($"对[{tmp.transform.GetType()}] 进行无翻译组件翻译, 原文:[{原文}] 翻译文本:[{翻译文本}]");
+                    }
+                }
+                if (text != null && !string.IsNullOrWhiteSpace(text.text))
+                {
+                    string 原文 = text.text.Replace("\n", "\\n").Replace("\r", "\\r"); ;
+                    if (UILocDatasEx2.TryGetValue(原文, out string 翻译文本))
+                    {
+                        text.text = 翻译文本;
+                        Log($"对[{text.transform.GetType()}] 进行无翻译组件翻译, 原文:[{原文}] 翻译文本:[{翻译文本}]");
+                    }
+                }
+            }
             return false;
         }
 
@@ -380,6 +421,12 @@ namespace xiaoye97
             {
                 //Log($"为TMP文本组件:[{__instance.transform.GetPath()}]在OnEnable时添加了翻译组件");
             }
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(TimelineDirector), "Play")]
+        public static void TimelineDirector_Play_Postfix(TimelineDirector __instance)
+        {
+            FindAndAddTranslator();
         }
 
         [HarmonyPrefix, HarmonyPatch(typeof(Translator), "Refesh")]

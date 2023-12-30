@@ -87,7 +87,7 @@ namespace xiaoye97
         /// <summary>
         /// 加载UI补充翻译表
         /// </summary>
-        public Dictionary<string, string> LoadUIExcel2()
+        public Dictionary<string, string> LoadUIExcelEx()
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
             LGTSChinesePlugin.Log($"开始加载UI补充翻译");
@@ -99,6 +99,24 @@ namespace xiaoye97
                 result[ID] = 翻译文本;
             }
             LGTSChinesePlugin.Log($"加载了{result.Count}行UI补充翻译");
+            return result;
+        }
+
+        /// <summary>
+        /// 加载UI补充翻译表2
+        /// </summary>
+        public Dictionary<string, string> LoadUIExcelEx2()
+        {
+            Dictionary<string, string> result = new Dictionary<string, string>();
+            LGTSChinesePlugin.Log($"开始加载UI补充翻译2");
+            var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "UI补充翻译表2");
+            foreach (DataRow row in dataTable.Rows)
+            {
+                string 原文 = row[0].ToString();
+                string 翻译文本 = row[1].ToString();
+                result[原文] = 翻译文本;
+            }
+            LGTSChinesePlugin.Log($"加载了{result.Count}行UI补充翻译2");
             return result;
         }
 

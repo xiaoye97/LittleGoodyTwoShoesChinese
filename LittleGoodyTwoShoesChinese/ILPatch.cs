@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using LGTS.UI.SaveMenu;
+using LGTS.UI.WorldMap;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,6 +43,13 @@ namespace xiaoye97
         {
             instructions = ReplaceIL(instructions, "<b>DATE</b>  ", "<b>日期</b>  ");
             instructions = ReplaceIL(instructions, "<b>TIME</b>  ", "<b>时间</b>  ");
+            return instructions;
+        }
+
+        [HarmonyTranspiler, HarmonyPatch(typeof(WorldMap), "Open")]
+        public static IEnumerable<CodeInstruction> WorldMap_Open_Patch(IEnumerable<CodeInstruction> instructions)
+        {
+            instructions = ReplaceIL(instructions, "Kieferberg", "基弗伯格");
             return instructions;
         }
     }
