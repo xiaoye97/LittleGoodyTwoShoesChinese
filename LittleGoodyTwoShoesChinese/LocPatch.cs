@@ -3,8 +3,6 @@ using HarmonyLib;
 using LGTS.Domain.DataManagers;
 using LGTS.Graphics;
 using LGTS.LGTS_Utils;
-using LGTS.MiniGames.ChopChop;
-using LGTS.MiniGames.RApples;
 using LGTS.UI.PopupWindows;
 using System;
 using System.Linq;
@@ -72,45 +70,6 @@ namespace xiaoye97
                 translator.grid = "UI";
                 translator.key = text;
                 LGTSChinesePlugin.Log($"为ShiftableOptions的选项文本组件:[{__instance.transform.GetPath()}]添加了翻译组件, grid:[UI] key:[{text}]");
-            }
-        }
-
-        /// <summary>
-        /// 苹果雨小游戏的屏幕Logo处理
-        /// </summary>
-        /// <param name="__instance"></param>
-        [HarmonyPostfix, HarmonyPatch(typeof(RainingApples), "Start")]
-        public static void RainingApples_Start_Postfix(RainingApples __instance)
-        {
-            if (!LGTSChinesePlugin.EnableChinese) return;
-            var logo = __instance.transform.Find("MinigameScreens/StartScreen/Logo");
-            var oriImage = logo.GetComponent<Image>();
-            var newLogo = GameObject.Instantiate(logo.gameObject, logo);
-            newLogo.transform.localPosition = Vector3.zero;
-            newLogo.SetActive(true);
-            oriImage.color = Color.clear;
-        }
-
-        /// <summary>
-        /// 砍砍砍小游戏的Logo和开始按钮处理
-        /// </summary>
-        /// <param name="__instance"></param>
-        [HarmonyPostfix, HarmonyPatch(typeof(ChopChop), "Start")]
-        public static void ChopChop_Start_Postfix(ChopChop __instance)
-        {
-            if (!LGTSChinesePlugin.EnableChinese) return;
-            try
-            {
-                var logo = __instance.transform.Find("MinigameScreens/StartScreen/Logo");
-                var oriImage = logo.GetComponent<Image>();
-                
-                var logoData = LGTSChinesePlugin.ImageLocDatas["ChopChop_StartScreen_Logo"][0];
-                Graphics.CopyTexture(logoData.Sprite.texture, oriImage.sprite.texture);
-                //oriImage.sprite.texture.LoadRawTextureData(logoData.Sprite.texture.GetRawTextureData());
-            }
-            catch (Exception ex)
-            {
-                LGTSChinesePlugin.LogWarning(ex.ToString());
             }
         }
     }

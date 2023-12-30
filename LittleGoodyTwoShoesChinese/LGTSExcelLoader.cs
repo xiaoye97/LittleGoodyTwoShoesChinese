@@ -3,6 +3,7 @@ using MiniExcelLibs;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
+using System.Security.Policy;
 using UnityEngine;
 
 namespace xiaoye97
@@ -158,33 +159,18 @@ namespace xiaoye97
                 string 图片名 = row[0].ToString();
                 string InstanceID = row[1].ToString();
                 string 图片路径 = row[2].ToString();
-                string 加载模式 = row[3].ToString();
                 string path = $"{LGTSChinesePlugin.ImagesDirPath}/{图片路径}";
                 if (File.Exists(path))
                 {
-                    Sprite sprite = null;
-                    if (string.IsNullOrWhiteSpace(加载模式))
+                    ImageData spriteData = new ImageData();
+                    spriteData.Name = 图片名;
+                    spriteData.InstanceID = InstanceID;
+                    spriteData.Path = path;
+                    if (!result.ContainsKey(图片名))
                     {
-                        sprite = FileHelper.LoadSprite(path);
+                        result[图片名] = new List<ImageData>();
                     }
-                    else
-                    {
-                        sprite = FileHelper.LoadSprite(path, 1);
-                    }
-                    sprite.name = 图片路径;
-                    if (sprite != null)
-                    {
-                        ImageData spriteData = new ImageData();
-                        spriteData.Name = 图片名;
-                        spriteData.InstanceID = InstanceID;
-                        spriteData.Path = path;
-                        spriteData.Sprite = sprite;
-                        if (!result.ContainsKey(图片名))
-                        {
-                            result[图片名] = new List<ImageData>();
-                        }
-                        result[图片名].Add(spriteData);
-                    }
+                    result[图片名].Add(spriteData);
                 }
                 else
                 {

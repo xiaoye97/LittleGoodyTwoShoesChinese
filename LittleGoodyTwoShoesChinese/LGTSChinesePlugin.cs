@@ -512,9 +512,8 @@ namespace xiaoye97
                 var locData = GetLocImage(image.sprite.texture.name, image.sprite.texture.GetInstanceID().ToString());
                 if (locData != null)
                 {
-                    image.sprite = locData.Sprite;
-                    image.enabled = false;
-                    image.enabled = true;
+                    var tex = locData.GetTex(image.sprite.texture);
+                    Graphics.CopyTexture(tex, image.sprite.texture);
                     Log($"图片翻译, 替换了[{image.transform.GetPath()}]的图片, 图片名:[{locData.Name}], InstanceID:[{locData.InstanceID}], 替换图片:[{locData.Path}]");
                 }
             }
@@ -528,9 +527,9 @@ namespace xiaoye97
                 var locData = GetLocImage(spriteRenderer.sprite.texture.name, spriteRenderer.sprite.texture.GetInstanceID().ToString());
                 if (locData != null)
                 {
-                    spriteRenderer.sprite = locData.Sprite;
-                    spriteRenderer.enabled = false;
-                    spriteRenderer.enabled = true;
+                    var tex = locData.GetTex(spriteRenderer.sprite.texture);
+                    Graphics.CopyTexture(tex, spriteRenderer.sprite.texture);
+                    Log($"图片翻译, 替换了[{spriteRenderer.transform.GetPath()}]的图片, 图片名:[{locData.Name}], InstanceID:[{locData.InstanceID}], 替换图片:[{locData.Path}]");
                 }
             }
         }

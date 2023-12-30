@@ -102,11 +102,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ex.cs" />
-    <Compile Include="FileHelper.cs" />
     <Compile Include="FontManager\FontData.cs" />
     <Compile Include="FontManager\FontInfo.cs" />
     <Compile Include="FontManager\FontManager.cs" />
-    <Compile Include="FontManager\TextComponentConverter.cs" />
     <Compile Include="FontManager\TextFontPatchs.cs" />
     <Compile Include="FontManager\TMPFontPatchs.cs" />
     <Compile Include="ILPatch.cs" />
