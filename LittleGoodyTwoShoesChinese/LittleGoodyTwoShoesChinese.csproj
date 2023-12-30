@@ -71,6 +71,10 @@
       <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\Little Goody Two Shoes\LGTS_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\Little Goody Two Shoes\LGTS_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\Little Goody Two Shoes\LGTS_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>False</Private>
@@ -98,6 +102,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ex.cs" />
+    <Compile Include="FileHelper.cs" />
     <Compile Include="FontManager\FontData.cs" />
     <Compile Include="FontManager\FontInfo.cs" />
     <Compile Include="FontManager\FontManager.cs" />
@@ -112,6 +117,8 @@
     <Compile Include="LGTSChinesePlugin.cs" />
     <Compile Include="LGTSDumper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ImageData.cs" />
+    <Compile Include="UIEx2Data.cs" />
     <Compile Include="UILocData.cs" />
   </ItemGroup>
   <ItemGroup>

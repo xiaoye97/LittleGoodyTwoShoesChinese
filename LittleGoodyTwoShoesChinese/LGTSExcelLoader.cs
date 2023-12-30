@@ -2,6 +2,7 @@
 using MiniExcelLibs;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using UnityEngine;
 
 namespace xiaoye97
@@ -105,16 +106,21 @@ namespace xiaoye97
         /// <summary>
         /// 加载UI补充翻译表2
         /// </summary>
-        public Dictionary<string, string> LoadUIExcelEx2()
+        public Dictionary<string, UIEx2Data> LoadUIExcelEx2()
         {
-            Dictionary<string, string> result = new Dictionary<string, string>();
+            Dictionary<string, UIEx2Data> result = new Dictionary<string, UIEx2Data>();
             LGTSChinesePlugin.Log($"开始加载UI补充翻译2");
             var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "UI补充翻译表2");
             foreach (DataRow row in dataTable.Rows)
             {
-                string 原文 = row[0].ToString();
-                string 翻译文本 = row[1].ToString();
-                result[原文] = 翻译文本;
+                UIEx2Data data = new UIEx2Data();
+                data.原文 = row[0].ToString();
+                if (!string.IsNullOrWhiteSpace(data.原文))
+                {
+                    data.翻译文本 = row[1].ToString();
+                    data.类型 = row[2].ToString();
+                    result[data.原文] = data;
+                }
             }
             LGTSChinesePlugin.Log($"加载了{result.Count}行UI补充翻译2");
             return result;
@@ -135,6 +141,57 @@ namespace xiaoye97
                 result[name] = 翻译名字;
             }
             LGTSChinesePlugin.Log($"加载了{result.Count}行人名翻译");
+            return result;
+        }
+
+        /// <summary>
+        /// 加载图片替换表
+        /// </summary>
+        /// <returns></returns>
+        public Dictionary<string, List<ImageData>> LoadImageExcel()
+        {
+            Dictionary<string, List<ImageData>> result = new Dictionary<string, List<ImageData>>();
+            LGTSChinesePlugin.Log($"开始加载图片替换表");
+            var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "图片替换表");
+            foreach (DataRow row in dataTable.Rows)
+            {
+                string 图片名 = row[0].ToString();
+                string InstanceID = row[1].ToString();
+                string 图片路径 = row[2].ToString();
+                string 加载模式 = row[3].ToString();
+                string path = $"{LGTSChinesePlugin.ImagesDirPath}/{图片路径}";
+                if (File.Exists(path))
+                {
+                    Sprite sprite = null;
+                    if (string.IsNullOrWhiteSpace(加载模式))
+                    {
+                        sprite = FileHelper.LoadSprite(path);
+                    }
+                    else
+                    {
+                        sprite = FileHelper.LoadSprite(path, 1);
+                    }
+                    sprite.name = 图片路径;
+                    if (sprite != null)
+                    {
+                        ImageData spriteData = new ImageData();
+                        spriteData.Name = 图片名;
+                        spriteData.InstanceID = InstanceID;
+                        spriteData.Path = path;
+                        spriteData.Sprite = sprite;
+                        if (!result.ContainsKey(图片名))
+                        {
+                            result[图片名] = new List<ImageData>();
+                        }
+                        result[图片名].Add(spriteData);
+                    }
+                }
+                else
+                {
+                    LGTSChinesePlugin.LogWarning($"找不到替换图片:[{图片名}] InstanceID:[{InstanceID}] 路径:[{path}]");
+                }
+            }
+            LGTSChinesePlugin.Log($"加载了{result.Count}行图片替换");
             return result;
         }
     }

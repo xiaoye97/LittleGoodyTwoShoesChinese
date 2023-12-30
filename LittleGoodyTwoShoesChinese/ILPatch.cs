@@ -1,4 +1,10 @@
 ﻿using HarmonyLib;
+using LGTS.MiniGames.Chicken;
+using LGTS.MiniGames.ChopChop;
+using LGTS.MiniGames.Cursed.ChopChop;
+using LGTS.MiniGames.Cursed.RApples;
+using LGTS.MiniGames.KissTheRat;
+using LGTS.MiniGames.RApples;
 using LGTS.UI.SaveMenu;
 using LGTS.UI.WorldMap;
 using System;
@@ -52,5 +58,61 @@ namespace xiaoye97
             instructions = ReplaceIL(instructions, "Kieferberg", "基弗伯格");
             return instructions;
         }
+
+        #region 小游戏
+        /// <summary>
+        /// 小游戏通用替换
+        /// </summary>
+        /// <param name="instructions"></param>
+        /// <returns></returns>
+        private static IEnumerable<CodeInstruction> MiniGameLoop(IEnumerable<CodeInstruction> instructions)
+        {
+            instructions = ReplaceIL(instructions, "ROUND {0}", "第{0}回合");
+            instructions = ReplaceIL(instructions, "GO!", "上!");
+            return instructions;
+        }
+
+        /// <summary>
+        /// 捡鸡蛋小游戏
+        /// </summary>
+        /// <param name="instructions"></param>
+        /// <returns></returns>
+        [HarmonyTranspiler, HarmonyPatch(typeof(ChickenFrenzy), "MinigameLoop", MethodType.Enumerator)]
+        public static IEnumerable<CodeInstruction> ChickenFrenzy_MinigameLoop_Patch(IEnumerable<CodeInstruction> instructions)
+        {
+            return MiniGameLoop(instructions);
+        }
+
+        [HarmonyTranspiler, HarmonyPatch(typeof(ChopChop), "MinigameLoop", MethodType.Enumerator)]
+        public static IEnumerable<CodeInstruction> ChopChop_MinigameLoop_Patch(IEnumerable<CodeInstruction> instructions)
+        {
+            return MiniGameLoop(instructions);
+        }
+
+        [HarmonyTranspiler, HarmonyPatch(typeof(CursedChopChop), "MinigameLoop", MethodType.Enumerator)]
+        public static IEnumerable<CodeInstruction> CursedChopChop_MinigameLoop_Patch(IEnumerable<CodeInstruction> instructions)
+        {
+            return MiniGameLoop(instructions);
+        }
+
+        [HarmonyTranspiler, HarmonyPatch(typeof(CursedRainingApples), "MinigameLoop", MethodType.Enumerator)]
+        public static IEnumerable<CodeInstruction> CursedRainingApples_MinigameLoop_Patch(IEnumerable<CodeInstruction> instructions)
+        {
+            return MiniGameLoop(instructions);
+        }
+
+        [HarmonyTranspiler, HarmonyPatch(typeof(KissTheRat), "MinigameLoop", MethodType.Enumerator)]
+        public static IEnumerable<CodeInstruction> KissTheRat_MinigameLoop_Patch(IEnumerable<CodeInstruction> instructions)
+        {
+            return MiniGameLoop(instructions);
+        }
+
+        [HarmonyTranspiler, HarmonyPatch(typeof(RainingApples), "MinigameLoop", MethodType.Enumerator)]
+        public static IEnumerable<CodeInstruction> RainingApples_MinigameLoop_Patch(IEnumerable<CodeInstruction> instructions)
+        {
+            return MiniGameLoop(instructions);
+        }
+
+        #endregion
     }
 }

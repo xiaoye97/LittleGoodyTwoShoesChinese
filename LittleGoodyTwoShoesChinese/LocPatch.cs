@@ -1,18 +1,16 @@
 ﻿using Gridly;
 using HarmonyLib;
 using LGTS.Domain.DataManagers;
-using LGTS.Domain.Entities;
 using LGTS.Graphics;
+using LGTS.LGTS_Utils;
+using LGTS.MiniGames.ChopChop;
+using LGTS.MiniGames.RApples;
 using LGTS.UI.PopupWindows;
-using LGTS.UI.Quests;
-using LGTS.UI.Shops;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace xiaoye97
 {
@@ -22,73 +20,37 @@ namespace xiaoye97
     public static class LocPatch
     {
         /// <summary>
-        /// 翻译弹窗中的文本
+        /// 约会后的人名显示处理
         /// </summary>
-        /// <param name="__instance"></param>
-        [HarmonyPostfix, HarmonyPatch(typeof(PopupWindowText), "SetContext")]
-        public static void PopupWindowText_SetContext_Postfix(PopupWindowText __instance)
+        [HarmonyPrefix, HarmonyPatch(typeof(PopupLauncher), "LaunchRomancePopup")]
+        public static bool PopupLauncher_AddOption_Postfix(PopupLauncher __instance, string loveInterest, Action onAccept)
         {
-            if (LGTSChinesePlugin.EnableChinese)
+            if (!LGTSChinesePlugin.EnableChinese) return true;
+            int relationship = PlayerDataManager.GetRelationship(loveInterest);
+            var ex2data = LGTSChinesePlugin.UILocDatasEx2.Values.Where((d) => d.原文 == loveInterest && d.类型 == "人名").First();
+            string 人名 = loveInterest;
+            if (ex2data != null)
             {
-                TMP_Text text = Traverse.Create(__instance).Field("text").GetValue<TMP_Text>();
-                if (LGTSChinesePlugin.UILocDatasEx.ContainsKey(text.text))
-                {
-                    string 翻译文本 = LGTSChinesePlugin.UILocDatasEx[text.text];
-                    LGTSChinesePlugin.Log($"PopupWindowText获取到翻译,原文:[{text.text}] 翻译:[{翻译文本}]");
-                    text.text = 翻译文本;
-                }
-                else
-                {
-                    LGTSChinesePlugin.Log($"PopupWindowText没有获取到翻译,原文:[{text.text}]");
-                }
+                人名 = ex2data.翻译文本;
             }
-        }
-
-        /// <summary>
-        /// 翻译人的名字
-        /// </summary>
-        //[HarmonyPostfix, HarmonyPatch(typeof(EntityDataManager), "GetEntityAlias")]
-        public static void EntityDataManager_GetEntityAlias_Postfix(EntityDataManager __instance, string entityName, ref string __result)
-        {
-            if (LGTSChinesePlugin.EnableChinese)
+            string text = 人名;
+            string text2;
+            if (relationship < 5)
             {
-                Entity entity = EntityDataManager.Get(entityName);
-                bool hasLoc = false;
-                if (entity != null)
-                {
-                    string alias = entity.Alias;
-                    // 如果alias等于名字, 说明没有alias, 使用原名查找翻译
-                    if (alias == entityName)
-                    {
-                        if (LGTSChinesePlugin.NameLocDatas.TryGetValue(entityName, out string locAlias))
-                        {
-                            if (!string.IsNullOrWhiteSpace(locAlias))
-                            {
-                                LGTSChinesePlugin.Log($"取到了人名翻译, Name:[{entityName}] Alias:[{alias}] 翻译名:[{locAlias}]");
-                                __result = locAlias;
-                                hasLoc = true;
-                            }
-                        }
-                    }
-                    // 如果有alias, 则以这个alias来查找翻译
-                    else
-                    {
-                        if (LGTSChinesePlugin.NameLocDatas.TryGetValue(alias, out string locAlias))
-                        {
-                            if (!string.IsNullOrWhiteSpace(locAlias))
-                            {
-                                LGTSChinesePlugin.Log($"取到了人名翻译, Name:[{entityName}] Alias:[{alias}] 翻译名:[{locAlias}]");
-                                __result = locAlias;
-                                hasLoc = true;
-                            }
-                        }
-                    }
-                    if (!hasLoc)
-                    {
-                        LGTSChinesePlugin.Log($"没有取到人名翻译, Name:[{entityName}] Alias:[{alias}]");
-                    }
-                }
+                text2 = "<b>" + 人名 + "</b> \n " + LocalizationMediator.GetTranslation("UI", "HEART_ACQUIRED");
             }
+            else if (relationship == 7)
+            {
+                text2 = "<b>" + 人名 + "</b> \n " + LocalizationMediator.GetTranslation("UI", "MAX_LOVE_ACQUIRED");
+                text = "MaxBond";
+            }
+            else
+            {
+                text2 = "<b>" + 人名 + "</b> \n " + LocalizationMediator.GetTranslation("UI", "STRONG_BOND_ACQUIRED");
+                text = "StrongBond";
+            }
+            __instance.LaunchPopup(PopupLauncher.PopupType.RomanceAlert, new PopupContext(new object[] { text2, text, onAccept }), null, null);
+            return false;
         }
 
         /// <summary>
@@ -99,6 +61,7 @@ namespace xiaoye97
         [HarmonyPostfix, HarmonyPatch(typeof(ShiftableOptions), "AddOption")]
         public static void ShiftableOptions_AddOption_Postfix(ShiftableOptions __instance, string text)
         {
+            if (!LGTSChinesePlugin.EnableChinese) return;
             var panel = __instance.scrollSnap.Panels[__instance.scrollSnap.Panels.Length - 1];
             var tmp = panel.GetComponentInChildren<TextMeshProUGUI>();
             var translator = tmp.GetComponent<Translator>();
@@ -113,43 +76,41 @@ namespace xiaoye97
         }
 
         /// <summary>
-        /// 地图菜单中, 任务类型的翻译
+        /// 苹果雨小游戏的屏幕Logo处理
         /// </summary>
         /// <param name="__instance"></param>
-        [HarmonyPostfix, HarmonyPatch(typeof(QuestLog), "Awake")]
-        public static void QuestLog_SetupNewEntry_Postfix(QuestLog __instance)
+        [HarmonyPostfix, HarmonyPatch(typeof(RainingApples), "Start")]
+        public static void RainingApples_Start_Postfix(RainingApples __instance)
         {
-            var Story = __instance.questTypeConfigs[QuestGoal.QuestType.Story];
-            Story.questTypeInfo = "故事事件";
-            __instance.questTypeConfigs[QuestGoal.QuestType.Story] = Story;
-            var Romantic = __instance.questTypeConfigs[QuestGoal.QuestType.Romantic];
-            Romantic.questTypeInfo = "浪漫约会";
-            __instance.questTypeConfigs[QuestGoal.QuestType.Romantic] = Romantic;
-            var Task = __instance.questTypeConfigs[QuestGoal.QuestType.Task];
-            Task.questTypeInfo = "任务事件";
-            __instance.questTypeConfigs[QuestGoal.QuestType.Task] = Task;
-            var Small = __instance.questTypeConfigs[QuestGoal.QuestType.Small];
-            Small.questTypeInfo = "小目标";
-            __instance.questTypeConfigs[QuestGoal.QuestType.Small] = Small;
+            if (!LGTSChinesePlugin.EnableChinese) return;
+            var logo = __instance.transform.Find("MinigameScreens/StartScreen/Logo");
+            var oriImage = logo.GetComponent<Image>();
+            var newLogo = GameObject.Instantiate(logo.gameObject, logo);
+            newLogo.transform.localPosition = Vector3.zero;
+            newLogo.SetActive(true);
+            oriImage.color = Color.clear;
         }
 
         /// <summary>
-        /// 商店名字的翻译
+        /// 砍砍砍小游戏的Logo和开始按钮处理
         /// </summary>
-        [HarmonyPostfix, HarmonyPatch(typeof(Shop), "Start")]
-        public static void Shop_Start(Shop __instance)
+        /// <param name="__instance"></param>
+        [HarmonyPostfix, HarmonyPatch(typeof(ChopChop), "Start")]
+        public static void ChopChop_Start_Postfix(ChopChop __instance)
         {
-            if (LGTSChinesePlugin.EnableChinese)
+            if (!LGTSChinesePlugin.EnableChinese) return;
+            try
             {
-                Shop.ShopID shopID = Traverse.Create(__instance).Field("shopID").GetValue<Shop.ShopID>();
-                if (shopID == Shop.ShopID.LebShop)
-                {
-                    var go = GameObject.Find("Shop/ShopUI/Banner/Text (TMP)");
-                    if (go != null)
-                    {
-                        go.GetComponent<TextMeshProUGUI>().text = "斯佩尔特的面包店";
-                    }
-                }
+                var logo = __instance.transform.Find("MinigameScreens/StartScreen/Logo");
+                var oriImage = logo.GetComponent<Image>();
+                
+                var logoData = LGTSChinesePlugin.ImageLocDatas["ChopChop_StartScreen_Logo"][0];
+                Graphics.CopyTexture(logoData.Sprite.texture, oriImage.sprite.texture);
+                //oriImage.sprite.texture.LoadRawTextureData(logoData.Sprite.texture.GetRawTextureData());
+            }
+            catch (Exception ex)
+            {
+                LGTSChinesePlugin.LogWarning(ex.ToString());
             }
         }
     }

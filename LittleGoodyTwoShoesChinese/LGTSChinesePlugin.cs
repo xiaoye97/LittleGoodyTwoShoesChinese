@@ -36,6 +36,7 @@ namespace xiaoye97
 
         public static string PluginDirPath;
         public static string ChineseExcelPath;
+        public static string ImagesDirPath;
 
         public static LGTSDumper LGTSDumper;
         public static LGTSExcelLoader LGTSExcelLoader;
@@ -61,8 +62,9 @@ namespace xiaoye97
         public static Dictionary<string, SheetData> Sheets = new Dictionary<string, SheetData>();
         public static Dictionary<string, UILocData> UILocDatas = new Dictionary<string, UILocData>();
         public static Dictionary<string, string> UILocDatasEx = new Dictionary<string, string>();
-        public static Dictionary<string, string> UILocDatasEx2 = new Dictionary<string, string>();
+        public static Dictionary<string, UIEx2Data> UILocDatasEx2 = new Dictionary<string, UIEx2Data>();
         public static Dictionary<string, string> NameLocDatas = new Dictionary<string, string>();
+        public static Dictionary<string, List<ImageData>> ImageLocDatas = new Dictionary<string, List<ImageData>>();
 
         private void Awake()
         {
@@ -71,6 +73,7 @@ namespace xiaoye97
             FileInfo fileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
             PluginDirPath = fileInfo.DirectoryName;
             ChineseExcelPath = $"{PluginDirPath}/LittleGoodyTwoShoesChinese.xlsx";
+            ImagesDirPath = $"{PluginDirPath}/Images";
             MainFontConfig = Config.Bind<string>("config", "MainFont", "LXGWWenKai-Regular.ttf", "主字体，如果没有主字体，则使用第一个后备字体作为主字体");
             FallbackFontsConfig = Config.Bind<string>("config", "FallbackFonts", "msyh.ttc;arial.ttf", "后备字体列表，使用;分隔，后备字体仅对TextMeshPro生效");
             DevMode = Config.Bind<bool>("dev", "DevMode", false, "如果打开了开发模式,则可以使用快捷键进行一些快捷操作");
@@ -100,6 +103,11 @@ namespace xiaoye97
         public static void Log(string msg)
         {
             logger.LogInfo(msg);
+        }
+
+        public static void LogWarning(string msg)
+        {
+            logger.LogWarning(msg);
         }
 
         private void Update()
@@ -144,7 +152,9 @@ namespace xiaoye97
             UILocDatasEx = LGTSExcelLoader.LoadUIExcelEx();
             UILocDatasEx2 = LGTSExcelLoader.LoadUIExcelEx2();
             NameLocDatas = LGTSExcelLoader.LoadNameExcel();
+            ImageLocDatas = LGTSExcelLoader.LoadImageExcel();
             RefreshAllTranslareText();
+            FindAndAddTranslator();
         }
 
         public static void FindAndAddTranslator()
@@ -293,6 +303,7 @@ namespace xiaoye97
                         if (column.columnID == Project.singleton.targetLanguage.languagesSuport.ToString())
                         {
                             __result = column.text;
+                            Log("gridId: " + grid + " recordID: " + recordID + " 原版取到翻译: " + __result);
                             return false;
                         }
                     }
@@ -304,6 +315,7 @@ namespace xiaoye97
                             if (column.columnID == langSupport.languagesSuport.ToString())
                             {
                                 __result = column.text;
+                                Log("gridId: " + grid + " recordID: " + recordID + " 原版取到翻译: " + __result);
                                 return false;
                             }
                         }
@@ -321,6 +333,8 @@ namespace xiaoye97
         {
             Translator translator;
             var path = transform.GetPath();
+            // 防止在Mod中翻译
+            if (path.StartsWith("UniverseLibCanvas")) return false;
             bool hasLoc = UILocDatas.TryGetValue(path, out var data);
             if (hasLoc)
             {
@@ -346,19 +360,19 @@ namespace xiaoye97
                 if (tmp != null && !string.IsNullOrWhiteSpace(tmp.text))
                 {
                     string 原文 = tmp.text.Replace("\n", "\\n").Replace("\r", "\\r");
-                    if (UILocDatasEx2.TryGetValue(原文, out string 翻译文本))
+                    if (UILocDatasEx2.TryGetValue(原文, out var ex2data))
                     {
-                        tmp.text = 翻译文本;
-                        Log($"对[{tmp.transform.GetType()}] 进行无翻译组件翻译, 原文:[{原文}] 翻译文本:[{翻译文本}]");
+                        tmp.text = ex2data.翻译文本;
+                        Log($"对[{tmp.transform.GetPath()}] 进行无翻译组件翻译, 原文:[{原文}] 翻译文本:[{ex2data.翻译文本}]");
                     }
                 }
                 if (text != null && !string.IsNullOrWhiteSpace(text.text))
                 {
                     string 原文 = text.text.Replace("\n", "\\n").Replace("\r", "\\r"); ;
-                    if (UILocDatasEx2.TryGetValue(原文, out string 翻译文本))
+                    if (UILocDatasEx2.TryGetValue(原文, out var ex2data))
                     {
-                        text.text = 翻译文本;
-                        Log($"对[{text.transform.GetType()}] 进行无翻译组件翻译, 原文:[{原文}] 翻译文本:[{翻译文本}]");
+                        text.text = ex2data.翻译文本;
+                        Log($"对[{text.transform.GetPath()}] 进行无翻译组件翻译, 原文:[{原文}] 翻译文本:[{ex2data.翻译文本}]");
                     }
                 }
             }
@@ -423,6 +437,15 @@ namespace xiaoye97
             }
         }
 
+        [HarmonyPostfix, HarmonyPatch(typeof(TMP_Text), "text", MethodType.Setter)]
+        public static void TMP_Text_text_Postfix(TMP_Text __instance)
+        {
+            if (AddTranslator(__instance as TextMeshProUGUI))
+            {
+                //Log($"为TMP文本组件:[{__instance.transform.GetPath()}]在OnEnable时添加了翻译组件");
+            }
+        }
+
         [HarmonyPostfix, HarmonyPatch(typeof(TimelineDirector), "Play")]
         public static void TimelineDirector_Play_Postfix(TimelineDirector __instance)
         {
@@ -442,5 +465,94 @@ namespace xiaoye97
         }
 
         #endregion 添加翻译组件
+
+        #region 图片翻译
+
+        private static ImageData GetLocImage(string name, string instanceID)
+        {
+            if (ImageLocDatas.TryGetValue(name, out var locDatas))
+            {
+                if (locDatas.Count == 1)
+                {
+                    var locData = locDatas[0];
+                    // 如果没有填InstanceID, 则直接使用此图片
+                    if (string.IsNullOrWhiteSpace(locData.InstanceID))
+                    {
+                        return locData;
+                    }
+                    // 如果填了InstanceID, 则必须一致才能使用
+                    else
+                    {
+                        if (locData.InstanceID == instanceID)
+                        {
+                            return locData;
+                        }
+                    }
+                }
+                // 如果同名图片超过1个, 则必须匹配InstanceID
+                else
+                {
+                    foreach (var locData in locDatas)
+                    {
+                        if (locData.InstanceID == instanceID)
+                        {
+                            return locData;
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        public static void ChangeImageSprite(Image image)
+        {
+            if (EnableChinese)
+            {
+                if (image.sprite == null || image.sprite.texture == null) return;
+                var locData = GetLocImage(image.sprite.texture.name, image.sprite.texture.GetInstanceID().ToString());
+                if (locData != null)
+                {
+                    image.sprite = locData.Sprite;
+                    image.enabled = false;
+                    image.enabled = true;
+                    Log($"图片翻译, 替换了[{image.transform.GetPath()}]的图片, 图片名:[{locData.Name}], InstanceID:[{locData.InstanceID}], 替换图片:[{locData.Path}]");
+                }
+            }
+        }
+
+        public static void ChangeSpriteRendererSprite(SpriteRenderer spriteRenderer)
+        {
+            if (EnableChinese)
+            {
+                if (spriteRenderer.sprite == null || spriteRenderer.sprite.texture == null) return;
+                var locData = GetLocImage(spriteRenderer.sprite.texture.name, spriteRenderer.sprite.texture.GetInstanceID().ToString());
+                if (locData != null)
+                {
+                    spriteRenderer.sprite = locData.Sprite;
+                    spriteRenderer.enabled = false;
+                    spriteRenderer.enabled = true;
+                }
+            }
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(Image), "OnEnable")]
+        public static void Image_OnEnable_Postfix(Image __instance)
+        {
+            ChangeImageSprite(__instance);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(Image), "sprite", MethodType.Setter)]
+        public static void Image_sprite_Postfix(Image __instance)
+        {
+            ChangeImageSprite(__instance);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(SpriteRenderer), "sprite", MethodType.Setter)]
+        public static void SpriteRenderer_sprite_Postfix(SpriteRenderer __instance)
+        {
+            ChangeSpriteRendererSprite(__instance);
+        }
+
+        #endregion 图片翻译
     }
 }
