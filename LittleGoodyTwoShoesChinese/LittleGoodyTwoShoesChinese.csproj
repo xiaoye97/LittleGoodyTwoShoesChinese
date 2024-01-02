@@ -101,6 +101,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Credits.cs" />
     <Compile Include="Ex.cs" />
     <Compile Include="FontManager\FontData.cs" />
     <Compile Include="FontManager\FontInfo.cs" />
@@ -110,6 +111,7 @@
     <Compile Include="ILPatch.cs" />
     <Compile Include="LGTSExcelLoader.cs" />
     <Compile Include="LocPatch.cs" />
+    <Compile Include="ResourceUtils.cs" />
     <Compile Include="RowData.cs" />
     <Compile Include="SheetData.cs" />
     <Compile Include="LGTSChinesePlugin.cs" />
@@ -121,6 +123,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="WARNING.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

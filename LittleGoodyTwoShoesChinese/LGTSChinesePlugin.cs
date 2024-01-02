@@ -452,6 +452,20 @@ namespace xiaoye97
             FindAndAddTranslator();
         }
 
+        [HarmonyPrefix, HarmonyPatch(typeof(Translator), "OnEnable")]
+        public static bool Translator_OnEnable_Postfix(Translator __instance)
+        {
+            if (__instance.text == null)
+            {
+                __instance.text = __instance.GetComponent<Text>();
+            }
+            if (__instance.textMeshPro == null)
+            {
+                __instance.textMeshPro = __instance.GetComponent<TextMeshProUGUI>();
+            }
+            return true;
+        }
+
         [HarmonyPrefix, HarmonyPatch(typeof(Translator), "Refesh")]
         public static bool Translator_Refesh_Postfix(Translator __instance)
         {
@@ -537,7 +551,14 @@ namespace xiaoye97
         [HarmonyPostfix, HarmonyPatch(typeof(Image), "OnEnable")]
         public static void Image_OnEnable_Postfix(Image __instance)
         {
-            ChangeImageSprite(__instance);
+            if (__instance.sprite != null && __instance.sprite.name == "WARNING_PHOTOSENSITIVITY")
+            {
+                Credits.ShowWarning(__instance);
+            }
+            else
+            {
+                ChangeImageSprite(__instance);
+            }
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(Image), "sprite", MethodType.Setter)]
