@@ -26,7 +26,7 @@ namespace xiaoye97
 
         public Dictionary<string, SheetData> LoadMainExcel()
         {
-            LGTSChinesePlugin.Log($"开始加载文本翻译");
+            LGTSChinesePlugin.Log($"开始加载文本翻译", false);
             if (LGTSSheetNames == null)
             {
                 RefreshLGTSSheetNams();
@@ -53,7 +53,7 @@ namespace xiaoye97
                 }
                 Sheets[sheetName] = sheet;
             }
-            LGTSChinesePlugin.Log($"加载了{count}行翻译");
+            LGTSChinesePlugin.Log($"加载了{count}行翻译", false);
             return Sheets;
         }
 
@@ -63,7 +63,7 @@ namespace xiaoye97
         /// <returns></returns>
         public Dictionary<string, UILocData> LoadUIExcel()
         {
-            LGTSChinesePlugin.Log($"开始加载UI翻译");
+            LGTSChinesePlugin.Log($"开始加载UI翻译", false);
             int count = 0;
             Dictionary<string, UILocData> result = new Dictionary<string, UILocData>();
             var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "UI翻译表");
@@ -82,7 +82,7 @@ namespace xiaoye97
                     count++;
                 }
             }
-            LGTSChinesePlugin.Log($"加载了{count}行UI翻译");
+            LGTSChinesePlugin.Log($"加载了{count}行UI翻译", false);
             return result;
         }
 
@@ -92,7 +92,7 @@ namespace xiaoye97
         public Dictionary<string, string> LoadUIExcelEx()
         {
             Dictionary<string, string> result = new Dictionary<string, string>();
-            LGTSChinesePlugin.Log($"开始加载UI补充翻译");
+            LGTSChinesePlugin.Log($"开始加载UI补充翻译", false);
             var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "UI补充翻译表");
             foreach (DataRow row in dataTable.Rows)
             {
@@ -100,7 +100,7 @@ namespace xiaoye97
                 string 翻译文本 = row[1].ToString();
                 result[ID] = 翻译文本;
             }
-            LGTSChinesePlugin.Log($"加载了{result.Count}行UI补充翻译");
+            LGTSChinesePlugin.Log($"加载了{result.Count}行UI补充翻译", false);
             return result;
         }
 
@@ -110,7 +110,7 @@ namespace xiaoye97
         public Dictionary<string, UIEx2Data> LoadUIExcelEx2()
         {
             Dictionary<string, UIEx2Data> result = new Dictionary<string, UIEx2Data>();
-            LGTSChinesePlugin.Log($"开始加载UI补充翻译2");
+            LGTSChinesePlugin.Log($"开始加载UI补充翻译2", false);
             var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "UI补充翻译表2");
             foreach (DataRow row in dataTable.Rows)
             {
@@ -123,25 +123,7 @@ namespace xiaoye97
                     result[data.原文] = data;
                 }
             }
-            LGTSChinesePlugin.Log($"加载了{result.Count}行UI补充翻译2");
-            return result;
-        }
-
-        /// <summary>
-        /// 加载人名表
-        /// </summary>
-        public Dictionary<string, string> LoadNameExcel()
-        {
-            Dictionary<string, string> result = new Dictionary<string, string>();
-            LGTSChinesePlugin.Log($"开始加载人名翻译");
-            var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "人名表");
-            foreach (DataRow row in dataTable.Rows)
-            {
-                string name = row[0].ToString().Replace("\n", "");
-                string 翻译名字 = row[2].ToString();
-                result[name] = 翻译名字;
-            }
-            LGTSChinesePlugin.Log($"加载了{result.Count}行人名翻译");
+            LGTSChinesePlugin.Log($"加载了{result.Count}行UI补充翻译2", false);
             return result;
         }
 
@@ -152,32 +134,34 @@ namespace xiaoye97
         public Dictionary<string, List<ImageData>> LoadImageExcel()
         {
             Dictionary<string, List<ImageData>> result = new Dictionary<string, List<ImageData>>();
-            LGTSChinesePlugin.Log($"开始加载图片替换表");
+            LGTSChinesePlugin.Log($"开始加载图片替换表", false);
             var dataTable = MiniExcel.QueryAsDataTable(LGTSChinesePlugin.ChineseExcelPath, sheetName: "图片替换表");
             foreach (DataRow row in dataTable.Rows)
             {
                 string 图片名 = row[0].ToString();
                 string InstanceID = row[1].ToString();
                 string 图片路径 = row[2].ToString();
+                string 替换模式 = row[3].ToString();
                 string path = $"{LGTSChinesePlugin.ImagesDirPath}/{图片路径}";
                 if (File.Exists(path))
                 {
-                    ImageData spriteData = new ImageData();
-                    spriteData.Name = 图片名;
-                    spriteData.InstanceID = InstanceID;
-                    spriteData.Path = path;
+                    ImageData data = new ImageData();
+                    data.Name = 图片名;
+                    data.InstanceID = InstanceID;
+                    data.Path = path;
+                    data.ReplaceMode = 替换模式;
                     if (!result.ContainsKey(图片名))
                     {
                         result[图片名] = new List<ImageData>();
                     }
-                    result[图片名].Add(spriteData);
+                    result[图片名].Add(data);
                 }
                 else
                 {
-                    LGTSChinesePlugin.LogWarning($"找不到替换图片:[{图片名}] InstanceID:[{InstanceID}] 路径:[{path}]");
+                    LGTSChinesePlugin.LogWarning($"找不到替换图片:[{图片名}] InstanceID:[{InstanceID}] 路径:[{path}]", false);
                 }
             }
-            LGTSChinesePlugin.Log($"加载了{result.Count}行图片替换");
+            LGTSChinesePlugin.Log($"加载了{result.Count}行图片替换", false);
             return result;
         }
     }

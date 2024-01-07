@@ -44,6 +44,9 @@ namespace xiaoye97
             return list.AsEnumerable();
         }
 
+        /// <summary>
+        /// 存档中的日期
+        /// </summary>
         [HarmonyTranspiler, HarmonyPatch(typeof(SaveSlot), "Setup")]
         public static IEnumerable<CodeInstruction> SaveSlot_Setup_Patch(IEnumerable<CodeInstruction> instructions)
         {
@@ -52,6 +55,9 @@ namespace xiaoye97
             return instructions;
         }
 
+        /// <summary>
+        /// 地图中的地名
+        /// </summary>
         [HarmonyTranspiler, HarmonyPatch(typeof(WorldMap), "Open")]
         public static IEnumerable<CodeInstruction> WorldMap_Open_Patch(IEnumerable<CodeInstruction> instructions)
         {
@@ -60,11 +66,10 @@ namespace xiaoye97
         }
 
         #region 小游戏
+
         /// <summary>
         /// 小游戏通用替换
         /// </summary>
-        /// <param name="instructions"></param>
-        /// <returns></returns>
         private static IEnumerable<CodeInstruction> MiniGameLoop(IEnumerable<CodeInstruction> instructions)
         {
             instructions = ReplaceIL(instructions, "ROUND {0}", "第{0}回合");
@@ -75,14 +80,15 @@ namespace xiaoye97
         /// <summary>
         /// 捡鸡蛋小游戏
         /// </summary>
-        /// <param name="instructions"></param>
-        /// <returns></returns>
         [HarmonyTranspiler, HarmonyPatch(typeof(ChickenFrenzy), "MinigameLoop", MethodType.Enumerator)]
         public static IEnumerable<CodeInstruction> ChickenFrenzy_MinigameLoop_Patch(IEnumerable<CodeInstruction> instructions)
         {
             return MiniGameLoop(instructions);
         }
 
+        /// <summary>
+        /// 砍木头小游戏
+        /// </summary>
         [HarmonyTranspiler, HarmonyPatch(typeof(ChopChop), "MinigameLoop", MethodType.Enumerator)]
         public static IEnumerable<CodeInstruction> ChopChop_MinigameLoop_Patch(IEnumerable<CodeInstruction> instructions)
         {
@@ -107,12 +113,15 @@ namespace xiaoye97
             return MiniGameLoop(instructions);
         }
 
+        /// <summary>
+        /// 苹果雨小游戏
+        /// </summary>
         [HarmonyTranspiler, HarmonyPatch(typeof(RainingApples), "MinigameLoop", MethodType.Enumerator)]
         public static IEnumerable<CodeInstruction> RainingApples_MinigameLoop_Patch(IEnumerable<CodeInstruction> instructions)
         {
             return MiniGameLoop(instructions);
         }
 
-        #endregion
+        #endregion 小游戏
     }
 }

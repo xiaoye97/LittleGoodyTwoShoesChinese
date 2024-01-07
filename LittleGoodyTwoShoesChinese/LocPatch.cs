@@ -1,14 +1,15 @@
 ﻿using Gridly;
 using HarmonyLib;
+using LGTS.Cinematics.Subtitles;
 using LGTS.Domain.DataManagers;
 using LGTS.Graphics;
 using LGTS.LGTS_Utils;
+using LGTS.MiniGames;
 using LGTS.UI.PopupWindows;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
 
 namespace xiaoye97
 {
@@ -70,6 +71,35 @@ namespace xiaoye97
                 translator.grid = "UI";
                 translator.key = text;
                 LGTSChinesePlugin.Log($"为ShiftableOptions的选项文本组件:[{__instance.transform.GetPath()}]添加了翻译组件, grid:[UI] key:[{text}]");
+            }
+        }
+
+        /// <summary>
+        /// 小游戏屏幕中字的颜色
+        /// </summary>
+        [HarmonyPostfix, HarmonyPatch(typeof(MinigameScoreScreen), "SetAnimation")]
+        public static void MinigameScoreScreen_SetAnimation_Postfix(MinigameScoreScreen __instance, int grade, int finalScore)
+        {
+            if (!LGTSChinesePlugin.EnableChinese) return;
+            __instance.minigameGradeScreen.scoreText.SetText($"<color=#000000>{finalScore}</color>", true);
+            __instance.minigameGradeScreen.gradeText.SetText($"<color=#000000>{__instance.GradeIndexToText(grade)}</color>", true);
+        }
+
+        private static List<string> SubtitleTrackMixerCache = new List<string>();
+
+        // 在需要Dump的时候再取消这个注释
+        //[HarmonyPostfix, HarmonyPatch(typeof(SubtitleTrackMixer), "ProcessFrame")]
+        public static void SubtitleTrackMixer_ProcessFrame_Postfix(SubtitleTrackMixer __instance, object playerData)
+        {
+            if (!LGTSChinesePlugin.EnableChinese) return;
+            TextMeshProUGUI textMeshProUGUI = playerData as TextMeshProUGUI;
+            if (textMeshProUGUI != null && !string.IsNullOrWhiteSpace(textMeshProUGUI.text))
+            {
+                if (!SubtitleTrackMixerCache.Contains(textMeshProUGUI.text))
+                {
+                    SubtitleTrackMixerCache.Add(textMeshProUGUI.text);
+                    LGTSChinesePlugin.Log($"Timeline Subtitle原文:[{textMeshProUGUI.text}]");
+                }
             }
         }
     }

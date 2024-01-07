@@ -28,6 +28,8 @@ namespace xiaoye97
         public static ConfigEntry<bool> DevMode;
         public static ConfigEntry<KeyCode> SwitchChineseHotkey;
         public static ConfigEntry<KeyCode> ReloadExcelHotkey;
+        public static ConfigEntry<KeyCode> FindAndAddTranslatorHotkey;
+        public static ConfigEntry<KeyCode> PauseGameHotkey;
         public static ConfigEntry<KeyCode> DumpHotkey;
         public static ConfigEntry<KeyCode> DumpSceneNoTranslatorTMPsHotkey;
         public static ConfigEntry<KeyCode> DumpSceneNoTranslatorTMPsIncludeInactiveHotkey;
@@ -53,7 +55,7 @@ namespace xiaoye97
                 if (value != _EnableChinese)
                 {
                     _EnableChinese = value;
-                    Log($"启用中文:{value}");
+                    Log($"启用中文:{value}", false);
                     RefreshAllTranslareText();
                 }
             }
@@ -63,13 +65,12 @@ namespace xiaoye97
         public static Dictionary<string, UILocData> UILocDatas = new Dictionary<string, UILocData>();
         public static Dictionary<string, string> UILocDatasEx = new Dictionary<string, string>();
         public static Dictionary<string, UIEx2Data> UILocDatasEx2 = new Dictionary<string, UIEx2Data>();
-        public static Dictionary<string, string> NameLocDatas = new Dictionary<string, string>();
         public static Dictionary<string, List<ImageData>> ImageLocDatas = new Dictionary<string, List<ImageData>>();
 
         private void Awake()
         {
             logger = Logger;
-            Log("LGTSChinesePlugin加载了");
+            Log("LGTSChinesePlugin加载了", false);
             FileInfo fileInfo = new FileInfo(Assembly.GetExecutingAssembly().Location);
             PluginDirPath = fileInfo.DirectoryName;
             ChineseExcelPath = $"{PluginDirPath}/LittleGoodyTwoShoesChinese.xlsx";
@@ -82,6 +83,8 @@ namespace xiaoye97
             DumpHotkey = Config.Bind<KeyCode>("dev", "DumpHotkey", KeyCode.F11, "导出文本快捷键");
             DumpSceneNoTranslatorTMPsHotkey = Config.Bind<KeyCode>("dev", "DumpSceneNoTranslatorTMPsHotkey", KeyCode.F1, "导出当前场景没有Translator的文本(不包括隐藏的物体)");
             DumpSceneNoTranslatorTMPsIncludeInactiveHotkey = Config.Bind<KeyCode>("dev", "DumpSceneNoTranslatorTMPsIncludeInactiveHotkey", KeyCode.F2, "导出当前场景没有Translator的文本(包括隐藏的物体)");
+            FindAndAddTranslatorHotkey = Config.Bind<KeyCode>("dev", "FindAndAddTranslatorHotkey", KeyCode.F3, "开始查找并添加翻译组件快捷键");
+            PauseGameHotkey = Config.Bind<KeyCode>("dev", "PauseGameHotkey", KeyCode.F4, "暂停游戏快捷键");
             LGTSDumper = new LGTSDumper();
             LGTSExcelLoader = new LGTSExcelLoader();
             FontManager = new FontManager(true, PluginDirPath, false, true);
@@ -100,13 +103,15 @@ namespace xiaoye97
             FindAndAddTranslator();
         }
 
-        public static void Log(string msg)
+        public static void Log(string msg, bool onlyShowInDevMode = true)
         {
+            if (onlyShowInDevMode && DevMode != null && !DevMode.Value) return;
             logger.LogInfo(msg);
         }
 
-        public static void LogWarning(string msg)
+        public static void LogWarning(string msg, bool onlyShowInDevMode = true)
         {
+            if (onlyShowInDevMode && DevMode != null && !DevMode.Value) return;
             logger.LogWarning(msg);
         }
 
@@ -134,11 +139,11 @@ namespace xiaoye97
                 {
                     DumpSceneNoTranslators(true);
                 }
-                if (Input.GetKeyDown(KeyCode.F3))
+                if (Input.GetKeyDown(FindAndAddTranslatorHotkey.Value))
                 {
                     FindAndAddTranslator();
                 }
-                if (Input.GetKeyDown(KeyCode.F4))
+                if (Input.GetKeyDown(PauseGameHotkey.Value))
                 {
                     Time.timeScale = Time.timeScale == 1 ? 0 : 1;
                 }
@@ -151,7 +156,6 @@ namespace xiaoye97
             UILocDatas = LGTSExcelLoader.LoadUIExcel();
             UILocDatasEx = LGTSExcelLoader.LoadUIExcelEx();
             UILocDatasEx2 = LGTSExcelLoader.LoadUIExcelEx2();
-            NameLocDatas = LGTSExcelLoader.LoadNameExcel();
             ImageLocDatas = LGTSExcelLoader.LoadImageExcel();
             RefreshAllTranslareText();
             FindAndAddTranslator();
@@ -261,7 +265,7 @@ namespace xiaoye97
                 }
                 else
                 {
-                    Log($"UI:[{recordID}]被标记为了汉化插件翻译UI, 但是没有对应的翻译数据");
+                    Log($"UI:[{recordID}]被标记为了汉化插件翻译UI, 但是没有对应的翻译数据", false);
                 }
             }
             if (EnableChinese)
@@ -518,18 +522,55 @@ namespace xiaoye97
             return null;
         }
 
+        public static void ChangeSpriteTexture(Transform t, Texture2D gameTexture)
+        {
+            var locData = GetLocImage(gameTexture.name, gameTexture.GetInstanceID().ToString());
+            if (locData != null)
+            {
+                var tex = locData.GetTex(gameTexture);
+                if (locData.ReplaceMode == "复制")
+                {
+                    t.gameObject.SetActive(false);
+                    var go = GameObject.Instantiate(t.gameObject, t);
+                    Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f));
+                    var image = go.GetComponent<Image>();
+                    if (image != null)
+                    {
+                        image.sprite = sprite;
+                        t.GetComponent<Image>().enabled = false;
+                    }
+                    var sr = go.GetComponent<SpriteRenderer>();
+                    if (sr != null)
+                    {
+                        sr.sprite = sprite;
+                        t.GetComponent<SpriteRenderer>().enabled = false;
+                    }
+                    go.SetActive(true);
+                    t.gameObject.SetActive(true);
+                }
+                else
+                {
+                    Graphics.CopyTexture(tex, gameTexture);
+                    Log($"图片翻译, 替换了[{t.GetPath()}]的图片, 图片名:[{locData.Name}], InstanceID:[{locData.InstanceID}], 替换图片:[{locData.Path}]");
+                }
+            }
+        }
+
+        public static void ChangeTMPSprite(TMP_SubMeshUI tmpSubMesh)
+        {
+            if (EnableChinese)
+            {
+                if (tmpSubMesh.mainTexture == null) return;
+                ChangeSpriteTexture(tmpSubMesh.transform, tmpSubMesh.mainTexture as Texture2D);
+            }
+        }
+
         public static void ChangeImageSprite(Image image)
         {
             if (EnableChinese)
             {
                 if (image.sprite == null || image.sprite.texture == null) return;
-                var locData = GetLocImage(image.sprite.texture.name, image.sprite.texture.GetInstanceID().ToString());
-                if (locData != null)
-                {
-                    var tex = locData.GetTex(image.sprite.texture);
-                    Graphics.CopyTexture(tex, image.sprite.texture);
-                    Log($"图片翻译, 替换了[{image.transform.GetPath()}]的图片, 图片名:[{locData.Name}], InstanceID:[{locData.InstanceID}], 替换图片:[{locData.Path}]");
-                }
+                ChangeSpriteTexture(image.transform, image.sprite.texture);
             }
         }
 
@@ -538,13 +579,7 @@ namespace xiaoye97
             if (EnableChinese)
             {
                 if (spriteRenderer.sprite == null || spriteRenderer.sprite.texture == null) return;
-                var locData = GetLocImage(spriteRenderer.sprite.texture.name, spriteRenderer.sprite.texture.GetInstanceID().ToString());
-                if (locData != null)
-                {
-                    var tex = locData.GetTex(spriteRenderer.sprite.texture);
-                    Graphics.CopyTexture(tex, spriteRenderer.sprite.texture);
-                    Log($"图片翻译, 替换了[{spriteRenderer.transform.GetPath()}]的图片, 图片名:[{locData.Name}], InstanceID:[{locData.InstanceID}], 替换图片:[{locData.Path}]");
-                }
+                ChangeSpriteTexture(spriteRenderer.transform, spriteRenderer.sprite.texture);
             }
         }
 
@@ -571,6 +606,12 @@ namespace xiaoye97
         public static void SpriteRenderer_sprite_Postfix(SpriteRenderer __instance)
         {
             ChangeSpriteRendererSprite(__instance);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(TMP_SubMeshUI), "AddSubTextObject")]
+        public static void TMP_SubMeshUI_AddSubTextObject_Postfix(TMP_SubMeshUI __instance, TMP_SubMeshUI __result)
+        {
+            ChangeTMPSprite(__result);
         }
 
         #endregion 图片翻译

@@ -13,6 +13,7 @@ namespace xiaoye97
         public string Name;
         public string InstanceID;
         public string Path;
+        public string ReplaceMode;
         public Dictionary<int, Texture2D> MipTexDict = new Dictionary<int, Texture2D>();
 
         public Texture2D GetTex(Texture2D src)
