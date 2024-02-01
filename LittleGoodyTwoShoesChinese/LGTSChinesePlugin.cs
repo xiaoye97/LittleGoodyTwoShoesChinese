@@ -17,7 +17,7 @@ using UnityEngine.UI;
 
 namespace xiaoye97
 {
-    [BepInPlugin("xiaoye97.LGTSChinesePlugin", "LGTSChinesePlugin", "1.0")]
+    [BepInPlugin("xiaoye97.LGTSChinesePlugin", "LGTSChinesePlugin", "0.9.0")]
     public class LGTSChinesePlugin : BaseUnityPlugin
     {
         #region 配置
